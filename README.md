@@ -1,206 +1,107 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/M_Sokit1)
-# ICA13-NetworkBasics
+# **Mini Linux Networking Project**
 
-In this assignment, you’ll build small tools that expose how Linux creates and manages network connections: a TCP echo server, a TCP client, a tiny UDP sender/receiver, and a short written component explaining how sockets operate inside the OS. You will complete this work in a Linux environment (lab VM, WSL2, or Docker) so that the correct system calls and behavior are available.
+This project provides minimal examples of TCP and UDP communication using the Linux socket API.
+The code includes a TCP echo server, a TCP client, and a small UDP demonstration program.
+Each component uses low-level system calls such as `socket()`, `bind()`, `listen()`, `accept()`, `connect()`, `read()`, `write()`, `sendto()`, and `recvfrom()`.
 
-You’ll be given simple drivers and tests. Your job is to implement the required C programs so the tests pass and you learn how networking abstractions interact with the OS.
+The goal of this project is to clearly illustrate how Linux manages sockets, how TCP and UDP differ, and how the OS handles ports, buffers, and connection metadata.
 
-## Linux Environment
+---
 
-You must run this assignment on Linux:
+## **Project Components**
 
-### Windows + WSL2
+### **TCP Echo Server**
 
-1. Install WSL and Ubuntu from Microsoft Store.
-2. In Ubuntu:
+* Listens on port **5050**
+* Accepts a single incoming TCP connection
+* Reads up to 256 bytes from the client
+* Prints the received data
+* Echoes the same data back to the client
+* Closes all sockets before exiting
 
-```bash
-sudo apt update
-sudo apt install -y build-essential
-```
+### **TCP Client**
 
-### macOS/Chromebook + Docker
+* Connects to `127.0.0.1:5050`
+* Sends one line of text
+* Receives the server’s response
+* Prints the received message
+* Closes the socket when finished
 
-1. Install Docker Desktop.
-2. Start a container and install tools:
+### **UDP Demonstration**
 
-```bash
-docker run -it --name minishell -v "$PWD":/hw -w /hw ubuntu bash
-apt update && apt install -y build-essential bash
-```
+* Sends a single datagram (e.g., `"ping"`) to port **6060**
+* Waits for a datagram reply using `recvfrom()`
+* Demonstrates connectionless communication (no handshake)
 
-To double check your installation is correct, `gcc --version` prints a version number.
+---
 
-## To Do
+## **Build and Execution**
 
-You will implement three small deliverables:
-
-- **tcp_server.c**: create a simple TCP echo server using ``socket()``, ``bind()``, ``listen()``, and ``accept()``.
-- **tcp_client.c**: create a client that connects with ``connect()``, writes a message, and reads the server’s reply.
-- **udp_demo.c**: send and receive a single datagram using UDP sockets.
-- **writeup.md**: short written answers about TCP vs UDP, sockets as file descriptors, and the OS abstractions used in networking.
-
-## Networking Concepts
-
-A **socket** is an endpoint for communication represented internally as a **file descriptor**, just like regular files or pipes. Programs interact with sockets using the same system calls: ``read()``, ``write()``, ``close()``, ``dup2()``, ``select()``, etc.
-
-TCP creates a reliable byte stream through a connection-oriented handshake. UDP sends independent, unreliable datagrams without establishing a connection. The OS tracks socket identity using a 4-tuple ``(local IP, local port, remote IP, remote port)`` for TCP connections, while UDP simply delivers datagrams to any process bound to the destination port.
-
-The socket lifecycle for TCP is:
-
-```perl
-server: socket → bind → listen → accept → read/write → close
-client: socket → connect → read/write → close
-```
-
-Your code will demonstrate these system calls and how the OS uses them to deliver data across the network.
-
-## Example
-
-If the server receives:
+Build all executables:
 
 ```bash
-hello world
-```
-
-Your server should print the line and send the exact same message back to the client. The client prints what it receives:
-
-```bash
-Received: hello world
-```
-
-For UDP, your program will send a datagram and print the response (if any). No connection or handshake is required.
-
-## Implementation
-
-### tcp_server.c
-
-In ``tcp_server.c``, you will implement a minimal TCP echo server.
-
-Your server must:
-
-1. Create a socket with
-
-    ```c
-    socket(AF_INET, SOCK_STREAM, 0);
-    ```
-
-2. Bind to port 5050 on localhost.
-3. Call ``listen()`` with a backlog of 5.
-4. Accept exactly **one** connection using ``accept()``.
-5. Read up to 256 bytes.
-6. Print the received message.
-7. Echo the same message back to the client using ``write()``.
-8. Close both sockets before exiting.
-
-Use these headers:
-``<sys/socket.h>``, ``<netinet/in.h>``, ``<arpa/inet.h>``, ``<unistd.h>``.
-
-Return 0 on success and nonzero on error. Use ``perror()`` for error messages.
-
-### tcp_client.c
-
-In ``tcp_client.c``, write a simple TCP client that:
-
-1. Creates a socket with ``socket()``.
-2. Connects to ``127.0.0.1:5050`` using ``connect()``.
-3. Sends one line of text via ``write()``.
-4. Reads the server’s response.
-5. Prints:
-
-    ```bash
-    Received: <message>
-    ```
-
-6. Closes the socket.
-
-On any error, print with ``perror()`` and return nonzero.
-
-### udp_demo.c
-
-In ``udp_demo.c``, implement a small UDP sender/receiver.
-
-Your program should:
-
-1. Create a UDP socket using ``SOCK_DGRAM``.
-2. Send a datagram (e.g., ``"ping"``) to localhost on port 6060.
-3. Attempt to receive one datagram with ``recvfrom()``.
-4. Print the reply or a message if timeout occurs.
-
-You do not call ``listen()``, ``accept()``, or perform a handshake—UDP is connectionless.
-
-### writeup.md
-
-In ``writeup.md``, answer the following concisely:
-
-1. **TCP vs UDP**: three differences and one example use for each.
-2. **Sockets as file descriptors**: what this means and why it’s useful.
-3. **Socket lifecycle**: describe the purpose of ``bind``, ``listen``, ``accept``, and ``connect``.
-4. **OS abstractions**: explain buffers, ports, and the TCP 4-tuple.
-
-One paragraph per item is sufficient.
-
-## Files
-
-Your repository will contain:
-
-- ``tcp_server.c`` – Implement the echo server.
-- ``tcp_client.c`` – Implement the TCP client.
-- ``udp_demo.c`` – Minimal UDP example.
-- ``writeup.md`` – Short written responses.
-- ``main_server.c`` – Driver for testing (don’t modify).
-- ``main_client.c`` – Driver for testing (don’t modify).
-- ``Makefile`` – Build rules for server, client, udp, and all.
-- ``test.sh`` – Full functional test suite.
-- ``README.md`` – This file.
-
-## Testing
-
-Your implementation will be run against test.sh. To complete this assignment, you must pass:
-
-Section 1: TCP server socket creation + lifecycle
-
-Section 2: Client connect + message exchange
-
-Section 3: Echo functionality
-
-Section 4: UDP send/receive
-
-Section 5: Contents of writeup.md
-
-To compile:
-
-```shell
 make
 ```
 
-To run tests:
+Run the TCP echo server:
 
-```shell
-make test
+```bash
+./tcp_server
 ```
 
-To run manually:
+Run the TCP client:
 
-```shell
-./tcp_server       # start the server
-./tcp_client       # send a message
-./udp_demo         # run the UDP example
+```bash
+./tcp_client
 ```
 
-## Hints
+Run the UDP demo:
 
-- Work incrementally. Test each part before running the full suite.
-- Useful C headers:
-``<stdio.h>``, ``<stdlib.h>``, ``<string.h>``, ``<unistd.h>``, ``<sys/socket.h>``, ``<netinet/in.h>``, ``<arpa/inet.h>``, ``<errno.h>``
+```bash
+./udp_demo
+```
 
-**For TCP**:
+---
 
-- Remember to zero your sockaddr_in.
-- Use htons() to convert the port to network order.
-- Use inet_addr("127.0.0.1") or inet_pton().
+## **Directory Structure**
 
-**For UDP**:
+| File                             | Purpose                                |
+| -------------------------------- | -------------------------------------- |
+| `tcp_server.c`                   | Minimal TCP echo server implementation |
+| `tcp_client.c`                   | TCP client for server testing          |
+| `udp_demo.c`                     | UDP sender/receiver example            |
+| `writeup.md`                     | Notes explaining networking concepts   |
+| `Makefile`                       | Build rules                            |
+| `main_server.c`, `main_client.c` | Test drivers (unchanged)               |
 
-- Use sendto() and recvfrom() instead of write()/read().
-- Always close sockets with close().
+---
+
+## **Concepts Illustrated**
+
+### **TCP vs UDP**
+
+TCP provides a reliable, ordered byte stream with a connection-oriented handshake.
+UDP transmits independent datagrams without establishing a connection, offering lower latency but no delivery guarantees.
+
+### **Sockets as File Descriptors**
+
+Sockets are represented internally by file descriptors, allowing them to use the standard Linux I/O API (`read`, `write`, `close`, etc.).
+This unifies network I/O with other forms of input/output in the OS.
+
+### **Socket Lifecycle**
+
+Typical TCP sequence:
+
+```
+Server: socket → bind → listen → accept → read/write → close  
+Client: socket → connect → read/write → close
+```
+
+Each step configures the socket for a different stage of communication.
+
+### **OS Networking Abstractions**
+
+The operating system uses internal buffers, port numbers, and connection metadata to track communication.
+For TCP, each connection is identified by a 4-tuple:
+`(local IP, local port, remote IP, remote port)`.
+
