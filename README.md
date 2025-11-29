@@ -1,4 +1,4 @@
-# **Mini Linux Networking Project**
+# **Mini Linux Networking**
 
 This project provides minimal examples of TCP and UDP communication using the Linux socket API.
 The code includes a TCP echo server, a TCP client, and a small UDP demonstration program.
